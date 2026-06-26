@@ -50,4 +50,10 @@ class EmployeeController extends Controller
         $result = $this->employeeService->getAvgSalaryUnder30();
         return response()->json($result, 200, [], JSON_UNESCAPED_UNICODE);
     }
+
+     public function exportManagers(): JsonResponse
+    {
+        $result = $this->employeeService->exportManagers();
+        return response()->json($result, $result['success'] ? 200 : 400, [], JSON_UNESCAPED_UNICODE);
+    }
 }

@@ -17,3 +17,6 @@ Route::get('/export-tax-top3', [EmployeeController::class, 'exportTaxTop3'])
 
 Route::get('/salary-under30', [EmployeeController::class, 'getAvgSalaryUnder30'])
     ->name('employees.salaryUnder30');
+
+Route::get('/export-managers', [EmployeeController::class, 'exportManagers'])
+    ->name('employees.exportManagers');

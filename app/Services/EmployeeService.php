@@ -224,4 +224,63 @@ class EmployeeService {
             'message'        => "Lương trung bình nhân viên dưới 30 tuổi: " . number_format(round($avg)) . " VNĐ."
         ];
     }
+
+    public function exportManagers(): array {
+        $result = [
+            'success'       => true,
+            'message'       => '',
+            'file_path'     => '',
+            'total_records' => 0
+        ];
+        $positionIds = array_values($this->positionMap);
+        $managerId = null;
+        $deputyId  = null;
+        foreach ($this->positionMap as $name => $id) {
+            if ($name === 'trưởng phòng') {
+                $managerId = $id;
+            }
+            if ($name === 'phó phòng') {
+                $deputyId = $id;
+            }
+        }
+        $targetPositions = array_filter([$managerId, $deputyId], fn($id) => $id !== null);
+        if (empty($targetPositions)) {
+            $result['success'] = false;
+            $result['message'] = 'Không tìm thấy chức vụ Trưởng phòng hoặc Phó phòng.';
+            return $result;
+        }
+        $employees = Employee::with(['department', 'position'])
+            ->whereIn('position_id', $targetPositions)
+            ->get();
+        if ($employees->isEmpty()) {
+            $result['success'] = false;
+            $result['message'] = 'Không có Trưởng phòng hoặc Phó phòng nào trong hệ thống.';
+            return $result;
+        }
+        $result['total_records'] = $employees->count();
+        $fullPath = storage_path('app/export/output_managers.csv');
+        $dir = dirname($fullPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        $handle = fopen($fullPath, 'w');
+        if ($handle === false) {
+            $result['success'] = false;
+            $result['message'] = 'Không thể mở file CSV để ghi.';
+            return $result;
+        }
+        fputcsv($handle, ['Mã nhân viên', 'Họ tên', 'Phòng ban', 'Vị trí']);
+        foreach ($employees as $emp) {
+            fputcsv($handle, [
+                $emp->emp_id,
+                $emp->full_name,
+                $emp->department->name,
+                $emp->position->name
+            ]);
+        }
+        fclose($handle);
+        $result['file_path'] = 'storage/app/export/output_managers.csv';
+        $result['message']   = "Xuất danh sách Trưởng/Phó phòng thành công: {$result['total_records']} nhân viên.";
+        return $result;
+    }
 }
