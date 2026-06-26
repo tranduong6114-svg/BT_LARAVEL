@@ -200,4 +200,28 @@ class EmployeeService {
 
         return $errors;
     }
+
+    public function getAvgSalaryUnder30(): array {
+        $employees = Employee::all();
+        $currentYear = (int) date('Y');
+        $under30 = $employees->filter(function ($emp) use ($currentYear) {
+            $birthYear = (int) date('Y', strtotime($emp->birthday));
+            return ($currentYear - $birthYear) < 30;
+        });
+        if ($under30->isEmpty()) {
+            return [
+                'success'        => true,
+                'average_salary' => 0,
+                'count'          => 0,
+                'message'        => 'Không có nhân viên nào dưới 30 tuổi.'
+            ];
+        }
+        $avg = $under30->avg('actual_salary');
+        return [
+            'success'        => true,
+            'average_salary' => round($avg),
+            'count'          => $under30->count(),
+            'message'        => "Lương trung bình nhân viên dưới 30 tuổi: " . number_format(round($avg)) . " VNĐ."
+        ];
+    }
 }

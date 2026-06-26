@@ -38,10 +38,16 @@ class EmployeeController extends Controller
         $result = $this->taxService->exportFull();
         return response()->json($result, $result['success'] ? 200 : 400, [], JSON_UNESCAPED_UNICODE);
     }
-    
+
     public function exportTaxTop3(): JsonResponse
     {
         $result = $this->taxService->exportTop3();
         return response()->json($result, $result['success'] ? 200 : 400, [], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getAvgSalaryUnder30(): JsonResponse
+    {
+        $result = $this->employeeService->getAvgSalaryUnder30();
+        return response()->json($result, 200, [], JSON_UNESCAPED_UNICODE);
     }
 }
