@@ -5,3 +5,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/import-csv', [EmployeeController::class, 'importCsv'])
     ->name('employees.importCsv');
+
+Route::get('/export-bhxh', [EmployeeController::class, 'exportBhxh'])
+    ->name('employees.exportBhxh');
