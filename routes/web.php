@@ -1,22 +1,45 @@
 <?php
 
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeCrudController;
+use App\Http\Controllers\Auth\LoginController;           
+use App\Http\Controllers\Auth\RegisterController; 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/import-csv', [EmployeeController::class, 'importCsv'])
-    ->name('employees.importCsv');
+Route::get('/', function () {
+    $employees = \App\Models\Employee::with(['department', 'position'])->get();
+    $statistics = [
+        'total_employees' => \App\Models\Employee::count(),
+        'total_departments' => \App\Models\Department::count(),
+        'total_positions' => \App\Models\Position::count(),
+        'avg_salary' => round(\App\Models\Employee::avg('actual_salary') ?? 0),
+        'under_30_count' => \App\Models\Employee::whereRaw('TIMESTAMPDIFF(YEAR, birthday, CURDATE()) < 30')->count(),
+    ];
+    return view('pages.home', compact('employees', 'statistics'));
+})->name('home')->middleware('auth');
 
-Route::get('/export-bhxh', [EmployeeController::class, 'exportBhxh'])
-    ->name('employees.exportBhxh');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register']);
 
-Route::get('/export-tax', [EmployeeController::class, 'exportTax'])
-    ->name('employees.exportTax');
-
-Route::get('/export-tax-top3', [EmployeeController::class, 'exportTaxTop3'])
-    ->name('employees.exportTaxTop3');
-
-Route::get('/salary-under30', [EmployeeController::class, 'getAvgSalaryUnder30'])
-    ->name('employees.salaryUnder30');
-
-Route::get('/export-managers', [EmployeeController::class, 'exportManagers'])
-    ->name('employees.exportManagers');
+Route::middleware('auth')->group(function () {
+    Route::get('/statistics', fn() => view('pages.statistics'))->name('employees.statistics');
+    
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/import-csv', [EmployeeController::class, 'importCsv'])->name('employees.importCsv');
+        Route::get('/export-bhxh', [EmployeeController::class, 'exportBhxh'])->name('employees.exportBhxh');
+        Route::get('/export-tax', [EmployeeController::class, 'exportTax'])->name('employees.exportTax');
+        Route::get('/export-tax-top3', [EmployeeController::class, 'exportTaxTop3'])->name('employees.exportTaxTop3');
+        Route::get('/salary-under30', [EmployeeController::class, 'getAvgSalaryUnder30'])->name('employees.salaryUnder30');
+        Route::get('/export-managers', [EmployeeController::class, 'exportManagers'])->name('employees.exportManagers');
+        
+        Route::get('/employees', [EmployeeCrudController::class, 'index'])->name('employees.index');
+        Route::get('/employees/create', [EmployeeCrudController::class, 'create'])->name('employees.create');
+        Route::post('/employees', [EmployeeCrudController::class, 'store'])->name('employees.store');
+        Route::get('/employees/{id}/edit', [EmployeeCrudController::class, 'edit'])->name('employees.edit');
+        Route::put('/employees/{id}', [EmployeeCrudController::class, 'update'])->name('employees.update');
+        Route::delete('/employees/{id}', [EmployeeCrudController::class, 'destroy'])->name('employees.destroy');
+    });
+});

@@ -20,6 +20,12 @@ class Employee extends Model
         'department_id',
         'position_id'
     ];
+
+    public function getIdAttribute()
+    {
+        return $this->emp_id;
+    }
+
     public function department(): BelongsTo {
         return $this->belongsTo(Department::class);
     }
