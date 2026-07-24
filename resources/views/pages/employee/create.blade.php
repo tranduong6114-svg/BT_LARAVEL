@@ -38,7 +38,7 @@
                 <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Email <span style="color: red;">*</span></label>
                 <input type="email"
                        name="email"
-                       value="{{ old('full_name') }}"
+                       value="{{ old('email') }}"
                        style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
                        required>
                 @error('email')

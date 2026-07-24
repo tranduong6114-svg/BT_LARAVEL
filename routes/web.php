@@ -7,15 +7,17 @@ use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    $totalEmployees = \App\Models\Employee::count();
     $employees = \App\Models\Employee::with(['department', 'position'])->get();
     $statistics = [
-        'total_employees' => \App\Models\Employee::count(),
+        'total_employees' => $totalEmployees,
         'total_departments' => \App\Models\Department::count(),
         'total_positions' => \App\Models\Position::count(),
         'avg_salary' => round(\App\Models\Employee::avg('actual_salary') ?? 0),
         'under_30_count' => \App\Models\Employee::whereRaw('TIMESTAMPDIFF(YEAR, birthday, CURDATE()) < 30')->count(),
     ];
-    return view('pages.home', compact('employees', 'statistics'));
+    $isAdmin = auth()->check() && auth()->user()->role === 'admin';
+    return view('pages.home', compact('employees', 'statistics', 'isAdmin', 'totalEmployees'));
 })->name('home')->middleware('auth');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -43,3 +45,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/employees/{id}', [EmployeeCrudController::class, 'destroy'])->name('employees.destroy');
     });
 });
+
+Route::get('/api/employees', [EmployeeCrudController::class, 'indexApi']);
+Route::delete('/api/employees/{id}', [EmployeeCrudController::class, 'destroyApi']);

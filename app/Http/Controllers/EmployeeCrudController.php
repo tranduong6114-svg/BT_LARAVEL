@@ -14,18 +14,21 @@ class EmployeeCrudController extends Controller
      */
     public function index()
     {
+        $totalEmployees = Employee::count();
+        
         $employees = Employee::with(['department', 'position'])->get();
         
-        // Tính toán statistics
         $statistics = [
-            'total_employees' => Employee::count(),
+            'total_employees' => $totalEmployees,
             'total_departments' => Department::count(),
             'total_positions' => Position::count(),
             'avg_salary' => Employee::avg('base_salary') ?? 0,
             'under_30_count' => Employee::whereRaw("TIMESTAMPDIFF(YEAR, birthday, CURDATE()) < 30")->count(),
         ];
         
-        return view('pages.home', compact('employees', 'statistics'));
+        $isAdmin = auth()->check() && auth()->user()->role === 'admin';
+        
+        return view('pages.home', compact('employees', 'statistics', 'isAdmin', 'totalEmployees'));
     }
 
     /**
@@ -121,5 +124,53 @@ class EmployeeCrudController extends Controller
         return redirect()
             ->route('home')
             ->with('success', 'Xóa nhân viên thành công!');
+    }
+
+    public function indexApi(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $employees = Employee::with(['department', 'position'])
+            ->orderBy('emp_id')
+            ->paginate($perPage);
+
+        $statistics = [
+            'total_employees' => Employee::count(),
+            'total_departments' => Department::count(),
+            'total_positions' => Position::count(),
+            'avg_salary' => Employee::avg('base_salary') ?? 0,
+            'under_30_count' => Employee::whereRaw("TIMESTAMPDIFF(YEAR, birthday, CURDATE()) < 30")->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'employees' => $employees->items(),
+            'pagination' => [
+                'current_page' => $employees->currentPage(),
+                'per_page' => $employees->perPage(),
+                'total' => $employees->total(),
+                'last_page' => $employees->lastPage(),
+            ],
+            'statistics' => $statistics,
+        ]);
+    }
+
+    public function destroyApi(string $id)
+    {
+        $employee = Employee::findOrFail($id);
+        $employee->delete();
+
+        $statistics = [
+            'total_employees' => Employee::count(),
+            'total_departments' => Department::count(),
+            'total_positions' => Position::count(),
+            'avg_salary' => Employee::avg('base_salary') ?? 0,
+            'under_30_count' => Employee::whereRaw("TIMESTAMPDIFF(YEAR, birthday, CURDATE()) < 30")->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Xóa nhân viên thành công!',
+            'statistics' => $statistics,
+        ]);
     }
 }

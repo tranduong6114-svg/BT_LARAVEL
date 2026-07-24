@@ -6,6 +6,14 @@
     @section('laravel-data')
         employees: @json($employees),
         statistics: @json($statistics),
+        isAdmin: @json($isAdmin ?? false),
+        csrfToken: '{{ csrf_token() }}',
+        pagination: {
+            current_page: 1,
+            per_page: 10,
+            total: {{ $totalEmployees }},
+            last_page: {{ max(1, ceil($totalEmployees / 10)) }}
+        }
     @endsection
 @endauth
 
@@ -78,17 +86,14 @@
                     <td style="padding: 12px; text-align: center;">
                         @if(auth()->user()->role === 'admin')
                         <a href="{{ route('employees.edit', $e->emp_id) }}" style="color: #007bff; text-decoration: none; margin-right: 10px;">Sửa</a>
-                        <form action="{{ route('employees.destroy', $e->emp_id) }}" method="POST" style="display: inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" onclick="return confirm('Xóa nhân viên này?')" style="color: #dc3545; background: none; border: none; cursor: pointer; padding: 0;">Xóa</button>
-                        </form>
+                        <button type="button" class="btn-delete" data-id="{{ $e->emp_id }}" data-name="{{ $e->full_name }}" style="color: #dc3545; background: none; border: none; cursor: pointer; padding: 0;">Xóa</button>
                         @endif
                     </td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
+        <div id="pagination" style="display: flex; justify-content: center; align-items: center; padding: 15px; gap: 5px;"></div>
     </div>
 </div>
 
@@ -103,6 +108,27 @@
     }
 </style>
 @endsection
+
+<div id="modalDeleteConfirm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: white; width: 400px; padding: 25px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <h5 style="margin: 0 0 15px 0; color: #333;">Xác nhận xóa</h5>
+        <p id="modalDeleteText" style="color: #666; margin-bottom: 20px;"></p>
+        <div style="text-align: right;">
+            <button id="btnCancelDelete" style="padding: 8px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Hủy</button>
+            <button id="btnConfirmDelete" style="padding: 8px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Xác nhận xóa</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalResult" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99999; justify-content: center; align-items: center;">
+    <div style="background: white; width: 400px; padding: 25px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <h5 id="modalResultTitle" style="margin: 0 0 15px 0;"></h5>
+        <p id="modalResultText" style="color: #666; margin-bottom: 20px;"></p>
+        <div style="text-align: right;">
+            <button id="btnCloseResult" style="padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Đóng</button>
+        </div>
+    </div>
+</div>
 
 @push('scripts')
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
