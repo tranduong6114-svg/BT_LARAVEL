@@ -124,8 +124,10 @@
         }
     </style>
     @stack('styles')
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    @auth
     <nav class="navbar">
         <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0;">
             <a class="navbar-brand" href="{{ url('/') }}">QL Nhân Viên</a>
@@ -148,7 +150,7 @@
             </ul>
         </div>
     </nav>
-
+    @endauth
     <div class="container main-content">
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>

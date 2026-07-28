@@ -7,7 +7,7 @@
     <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 25px;">
         <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Thêm Nhân Viên</h2>
 
-        <form method="POST" action="{{ route('employees.store') }}">
+        <form method="POST" action="{{ route('employees.store') }}" novalidate>
             @csrf
 
             <div style="margin-bottom: 15px;">
@@ -96,9 +96,10 @@
 
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Ngày Sinh <span style="color: red;">*</span></label>
-                <input type="date" 
+                <input type="text" 
                        name="birthday" 
                        value="{{ old('birthday') }}" 
+                       max="{{ date('Y-m-d') }}"
                        style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
                        required>
                 @error('birthday')

@@ -1,13 +1,17 @@
+import $ from 'jquery';
+
 $(function() {
     if (typeof window.LaravelData === 'undefined') {
         console.error('LaravelData not found!');
         return;
     }
     
+    if ($('#tableBody').length === 0) return;
+    
     var csrfToken = window.LaravelData.csrfToken;
     var isAdmin = window.LaravelData.isAdmin || false;
     var pagination = window.LaravelData.pagination || { current_page: 1, per_page: 10, last_page: 1 };
-    var pendingDeleteId = null;
+    var isDeleting = false;
     
     function loadEmployees(page = 1) {
         $.ajax({
@@ -37,20 +41,20 @@ $(function() {
             html = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">Chưa có dữ liệu</td></tr>';
         } else {
             $.each(employees, function(i, e) {
-                var deptName = e.department ? e.department.name : 'N/A';
-                var posName = e.position ? e.position.name : 'N/A';
+                var deptName = e.department ? $('<div>').text(e.department.name).html() : 'N/A';
+                var posName = e.position ? $('<div>').text(e.position.name).html() : 'N/A';
                 var birthday = e.birthday ? formatDate(e.birthday) : 'N/A';
                 var actions = '';
                 
                 if (isAdmin) {
                     actions = '<a href="/employees/' + e.emp_id + '/edit" style="color: #007bff; text-decoration: none; margin-right: 10px;">Sửa</a>' +
-                              '<button type="button" class="btn-delete" data-id="' + e.emp_id + '" data-name="' + e.full_name + '" style="color: #dc3545; background: none; border: none; cursor: pointer; padding: 0;">Xóa</button>';
+                              '<button type="button" class="btn-delete" data-id="' + e.emp_id + '" data-name="' + $('<div>').text(e.full_name).html() + '" style="color: #dc3545; background: none; border: none; cursor: pointer; padding: 0;">Xóa</button>';
                 }
                 
                 html += '<tr id="row-' + e.emp_id + '" style="border-bottom: 1px solid #ddd;">' +
                     '<td style="padding: 12px;"><strong>' + e.emp_id + '</strong></td>' +
-                    '<td style="padding: 12px;">' + e.full_name + '</td>' +
-                    '<td style="padding: 12px;">' + e.email + '</td>' +
+                    '<td style="padding: 12px;">' + $('<div>').text(e.full_name).html() + '</td>' +
+                    '<td style="padding: 12px;">' + $('<div>').text(e.email).html() + '</td>' +
                     '<td style="padding: 12px; text-align: center;">' + birthday + '</td>' +
                     '<td style="padding: 12px;">' + deptName + '</td>' +
                     '<td style="padding: 12px;">' + posName + '</td>' +
@@ -107,23 +111,34 @@ $(function() {
         loadEmployees(pagination.current_page);
     });
     
-    $(document).on('click', '.btn-delete', function() {
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        pendingDeleteId = id;
-        $('#modalDeleteText').html('Bạn có chắc muốn xóa nhân viên <strong>' + name + '</strong>?<br>Hành động này không thể hoàn tác.');
-        $('#modalDeleteConfirm').css('display', 'flex');
+    $(document).on('click', '.btn-delete', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var $btn = $(this);
+        var idToDelete = $btn.data('id');
+        var name = $btn.data('name');
+        
+        $('#modalDeleteText').html('Bạn có chắc muốn xóa nhân viên <strong>' + $('<div>').text(name).html() + '</strong>?<br>Hành động này không thể hoàn tác.');
+        $('#modalDeleteConfirm').data('deleteId', idToDelete).css('display', 'flex');
     });
     
     $('#btnCancelDelete').click(function() {
         $('#modalDeleteConfirm').hide();
-        pendingDeleteId = null;
     });
     
     $('#btnConfirmDelete').click(function() {
-        if (!pendingDeleteId) return;
-        var idToDelete = pendingDeleteId;
+        if (isDeleting) return;
+        
+        var idToDelete = $('#modalDeleteConfirm').data('deleteId');
+        if (!idToDelete) {
+            $('#modalDeleteConfirm').hide();
+            return;
+        }
+        
+        isDeleting = true;
         $('#modalDeleteConfirm').hide();
+        $('#btnConfirmDelete').prop('disabled', true).text('Đang xử lý...');
         
         $.ajax({
             url: '/api/employees/' + idToDelete,
@@ -133,32 +148,25 @@ $(function() {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             success: function(response) {
+                $('#btnConfirmDelete').prop('disabled', false).text('Xác nhận xóa');
                 if (response.success) {
-                    $('#row-' + idToDelete).fadeOut(300, function() {
-                        $(this).remove();
-                        if ($('#tableBody tr').length === 0) {
-                            loadEmployees(pagination.current_page > 1 ? pagination.current_page - 1 : 1);
-                        }
-                    });
-                    if (response.statistics) {
-                        renderStats(response.statistics);
-                    }
+                    showResultModal(true, response.message);
                     setTimeout(function() {
-                        showResultModal(true, response.message);
-                    }, 350);
+                        window.location.href = '/';
+                    }, 800);
                 } else {
+                    isDeleting = false;
                     showResultModal(false, response.message);
                 }
             },
             error: function(xhr) {
+                isDeleting = false;
+                $('#btnConfirmDelete').prop('disabled', false).text('Xác nhận xóa');
                 var msg = 'Xóa thất bại!';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     msg = xhr.responseJSON.message;
                 }
                 showResultModal(false, msg);
-            },
-            complete: function() {
-                pendingDeleteId = null;
             }
         });
     });
@@ -170,7 +178,6 @@ $(function() {
     $('#modalDeleteConfirm, #modalResult').click(function(e) {
         if (e.target === this) {
             $(this).hide();
-            pendingDeleteId = null;
         }
     });
     

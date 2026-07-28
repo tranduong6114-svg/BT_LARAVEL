@@ -29,8 +29,10 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::middleware('auth')->group(function () {
     Route::get('/statistics', fn() => view('pages.statistics'))->name('employees.statistics');
     
+    Route::get('/api/employees', [EmployeeCrudController::class, 'indexApi']);
+    
     Route::middleware('role:admin')->group(function () {
-        Route::post('/import-csv', [EmployeeController::class, 'importCsv'])->name('employees.importCsv');
+        Route::get('/import-csv', [EmployeeController::class, 'importCsv'])->name('employees.importCsv');
         Route::get('/export-bhxh', [EmployeeController::class, 'exportBhxh'])->name('employees.exportBhxh');
         Route::get('/export-tax', [EmployeeController::class, 'exportTax'])->name('employees.exportTax');
         Route::get('/export-tax-top3', [EmployeeController::class, 'exportTaxTop3'])->name('employees.exportTaxTop3');
@@ -43,8 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/employees/{id}/edit', [EmployeeCrudController::class, 'edit'])->name('employees.edit');
         Route::put('/employees/{id}', [EmployeeCrudController::class, 'update'])->name('employees.update');
         Route::delete('/employees/{id}', [EmployeeCrudController::class, 'destroy'])->name('employees.destroy');
+        Route::delete('/api/employees/{id}', [EmployeeCrudController::class, 'destroyApi']);
     });
 });
 
-Route::get('/api/employees', [EmployeeCrudController::class, 'indexApi']);
-Route::delete('/api/employees/{id}', [EmployeeCrudController::class, 'destroyApi']);

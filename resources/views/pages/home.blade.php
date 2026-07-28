@@ -4,7 +4,7 @@
 
 @auth
     @section('laravel-data')
-        employees: @json($employees),
+        employees: @json($employees, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP),
         statistics: @json($statistics),
         isAdmin: @json($isAdmin ?? false),
         csrfToken: '{{ csrf_token() }}',
@@ -86,7 +86,7 @@
                     <td style="padding: 12px; text-align: center;">
                         @if(auth()->user()->role === 'admin')
                         <a href="{{ route('employees.edit', $e->emp_id) }}" style="color: #007bff; text-decoration: none; margin-right: 10px;">Sửa</a>
-                        <button type="button" class="btn-delete" data-id="{{ $e->emp_id }}" data-name="{{ $e->full_name }}" style="color: #dc3545; background: none; border: none; cursor: pointer; padding: 0;">Xóa</button>
+                        <button type="button" class="btn-delete" data-id="{{ $e->emp_id }}" data-name="{{ htmlspecialchars($e->full_name, ENT_QUOTES, 'UTF-8') }}" style="color: #dc3545; background: none; border: none; cursor: pointer; padding: 0;">Xóa</button>
                         @endif
                     </td>
                 </tr>
@@ -129,8 +129,3 @@
         </div>
     </div>
 </div>
-
-@push('scripts')
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="{{ asset('js/pages/home.js') }}"></script>
-@endpush
