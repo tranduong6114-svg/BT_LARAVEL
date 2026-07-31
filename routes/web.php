@@ -39,6 +39,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/salary-under30', [EmployeeController::class, 'getAvgSalaryUnder30'])->name('employees.salaryUnder30');
         Route::get('/export-managers', [EmployeeController::class, 'exportManagers'])->name('employees.exportManagers');
         
+        Route::get('/download-bhxh', fn() => response()->download(storage_path('app/export/output_bhxh.csv')))->name('employees.downloadBhxh');
+        Route::get('/download-tax', fn() => response()->download(storage_path('app/export/output_tax.csv')))->name('employees.downloadTax');
+        Route::get('/download-tax-top3', fn() => response()->download(storage_path('app/export/output_tax_top3.csv')))->name('employees.downloadTaxTop3');
+        Route::get('/download-managers', fn() => response()->download(storage_path('app/export/output_managers.csv')))->name('employees.downloadManagers');
+        
         Route::get('/employees', [EmployeeCrudController::class, 'index'])->name('employees.index');
         Route::get('/employees/create', [EmployeeCrudController::class, 'create'])->name('employees.create');
         Route::post('/employees', [EmployeeCrudController::class, 'store'])->name('employees.store');

@@ -7,7 +7,7 @@
     <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 25px;">
         <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Sửa Nhân Viên</h2>
         
-        <form method="POST" action="{{ route('employees.update', $employee->emp_id) }}">
+        <form method="POST" action="{{ route('employees.update', $employee->emp_id) }}" novalidate>
             @csrf
             @method('PUT')
             
